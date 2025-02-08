@@ -36,12 +36,10 @@ void setup()
   getExternalIP();
   // firebase 세팅
   firebaseSetup();
-
 }
 
 void loop()
 {
-  // ArduinoOTA.handle(); // https://github.com/mobizt/FirebaseClient important에 따르면 이 코드가 있으면 속도가 느려질 수 있음
   app.loop();
   database.loop();
   storage.loop();
@@ -70,7 +68,7 @@ void loop()
       database.set<String>(aClient3, "/Controller/" + macID + "/physicalIP", physicalIP, asyncCB, "setphysicalIPTask");
 
       Serial.println("Updating your firmware (OTA)... ");
-          storage.ota(aClient4, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
+      storage.ota(aClient4, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
       taskComplete = 0;
     }
   }
