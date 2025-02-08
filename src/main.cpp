@@ -1,54 +1,50 @@
+#include <Arduino.h>
+#include <SPI.h>
+#include <WiFi.h>
+#include <WiFiManager.h>
+#include <FirebaseClient.h>
+#include <WiFiClientSecure.h>
+#include <FS.h>
+#include <LittleFS.h>
+
+#include "system.h"
+#include "credential.h"
+#include "definitions.h"
+#include "externalFunc.h"
 #include "WS_QMI8658.h"
 #include "WS_Matrix.h"
-// #include <Preferences.h>
-// #include <nvs_flash.h>
 
-#include <Preferences.h>
-#include <nvs_flash.h>
-
-
-#define BOOT_BUTTON_PIN 0
-
-volatile int gameSelection = 0;
-
-void IRAM_ATTR buttonISR()
-{
-  // 버튼이 눌렸을 때 실행할 코드
-  Serial.println("BOOT 버튼이 눌렸습니다. 특정 코드 실행 중...");
-  gameSelection++;
-}
+#define FILESYSTEM LittleFS
+#define FORMAT_LITTLEFS_IF_FAILED true
 
 extern IMUdata Accel;
 extern IMUdata Gyro;
 IMUdata game;
 
-
+int i = 0;
+uint8_t X_EN = 0, Y_EN = 0, Time_X_A = 0, Time_X_B = 0, Time_Y_A = 0, Time_Y_B = 0;
 
 void setup()
 {
   Serial.begin(115200);
-
-  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP); // 버튼을 입력 모드로 설정
-  // 인터럽트 설정 (하강 엣지에서 트리거)
-  attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON_PIN), buttonISR, FALLING);
-
   QMI8658_Init();
   Matrix_Init();
 
+  // wifi매니저 세팅
+  wifiSetup();
+  // 외부 ip 세팅
+  getExternalIP();
+  // firebase 세팅
+  firebaseSetup();
+
 }
-
-int i = 0;
-uint8_t X_EN = 0, Y_EN = 0, Time_X_A = 0, Time_X_B = 0, Time_Y_A = 0, Time_Y_B = 0;
-
 
 void loop()
 {
- 
-
-switch (gameSelection)
-  {
-  case 0:
-
+  // ArduinoOTA.handle(); // https://github.com/mobizt/FirebaseClient important에 따르면 이 코드가 있으면 속도가 느려질 수 있음
+  app.loop();
+  database.loop();
+  storage.loop();
   if (pcnt >= 100)
   {
     shiftUp();
@@ -58,22 +54,33 @@ switch (gameSelection)
   drawFrame(pcnt);
   matrix.show();
   pcnt += 30;
+  if (app.ready() && millis() - timeout > 100)
+  {
+    timeout = millis();
+    if (taskComplete != 0)
+    {
 
-case 1:
-    RGB_Matrix1(i);
-    delay(30);
-    i++;
-    if (i == 24)
-      i = 0;
-    break;
-  case 2:
-    RGB_Matrix2(i);
-    delay(60);
-    i++;
-    if (i == 16)
-      i = 0;
-    break;
-  case 3:
+      Serial.println("start set data");
+      localIp = WiFi.localIP().toString();
+      database.set<String>(aClient3, "/Controller/" + macID + "/version", version, asyncCB, "setVersionTask");
+      database.set<String>(aClient3, "/Controller/" + macID + "/ID", macID, asyncCB, "setIDTask");
+      database.set<String>(aClient3, "/Controller/" + macID + "/IP", localIp, asyncCB, "setIPTask");
+      database.set<String>(aClient3, "/Controller/" + macID + "/physicalIP", physicalIP, asyncCB, "setphysicalIPTask");
+
+#if defined(OTA_STORAGE)
+      storage.setOTAStorage(OTA_STORAGE);
+#endif
+      Serial.println("Updating your firmware (OTA)... ");
+      storage.ota(aClient3, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
+      // You can provide the access token in case non-authentication mode (NoAuth) for priviledge access file download.
+      // storage.ota(aClient, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin", "access token"), asyncCB, "otaTask");
+
+      taskComplete = 0;
+    }
+  }
+  if (millis() - timeout > 10)
+  {
+    timeout = millis();
     QMI8658_Loop();
     if (Accel.x > 0.15 || Accel.x < 0 || Accel.y > 0.15 || Accel.y < 0 || Accel.z > -0.9 || Accel.z < -1.1)
     {
@@ -135,19 +142,8 @@ case 1:
       X_EN = 0;
       Y_EN = 0;
     }
-    delay(10);
-    break;
-  case 4:
-    Serial.println("BOOT 버튼이 눌렸습니다. 특정 코드 실행 중...");
-    gameSelection = 0;
-    break;
-  default:
-    break;
   }
-
-
 }
-
 /* void setup()
 {
   Matrix_Init();
