@@ -1,5 +1,5 @@
 // version
-String version = "1.1";
+float version = 1.0;
 
 // wifi setting
 String macID = WiFi.macAddress();
@@ -17,11 +17,13 @@ unsigned long timeout3 = 0;
 int taskComplete = 1;
 int tagTaskComplete = 1;
 
+
 int tag = 0;
 int tagStatus = 0;
 int tagType = 0;
 int tagColor = 0;
 String tagID = "";
+String latestVersion = "";
 
 void asyncCB(AsyncResult &aResult);
 void printResult(AsyncResult &aResult);

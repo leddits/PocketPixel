@@ -6,14 +6,17 @@ void firebaseSetup()
   ssl_client1.setClient(&basic_client1);
   ssl_client2.setClient(&basic_client2);
   ssl_client3.setClient(&basic_client3);
+  ssl_client4.setClient(&basic_client4);
 
   ssl_client1.setInsecure();
   ssl_client2.setInsecure();
   ssl_client3.setInsecure();
+  ssl_client4.setInsecure();
 
   ssl_client1.setBufferSizes(2048, 1024);
   ssl_client2.setBufferSizes(2048, 1024);
   ssl_client3.setBufferSizes(2048, 1024);
+
 
   // In case using ESP8266 without PSRAM and you want to reduce the memory usage,
   // you can use WiFiClientSecure instead of ESP_SSLClient with minimum receive and transmit buffer size setting as following.
@@ -33,6 +36,7 @@ void firebaseSetup()
   ssl_client1.setSessionTimeout(150);
   ssl_client1.setSessionTimeout(150);
   ssl_client3.setSessionTimeout(150);
+  ssl_client4.setSessionTimeout(10000);
 
   Serial.println("Initializing app...");
   initializeApp(aClient3, app, getAuth(user_auth), asyncCB, "authTask");
@@ -40,10 +44,9 @@ void firebaseSetup()
   app.getApp<Storage>(storage);
   database.url(FIREBASE_URL);
   database.setSSEFilters("get,put,patch,keep-alive,cancel,auth_revoked");
-  // database.get(aClient, "/Controller/" + macID, asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagTask");             // 스트리밍시.. set 이후에는 느려짐
-  // database.get(aClient, "/Controller/" + macID + "/tagType", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagTypeTask"); // 스트리밍시.. set 이후에는 느려짐
+  
   database.get(aClient1, "/Controller/" + macID + "/tagColor", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagColorTask");   // 스트리밍시.. set 이후에는 느려짐
-  database.get(aClient2, "/Controller/" + macID + "/tagStatus", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagStatusTask"); // 스트리밍시.. set 이후에는 느려짐
+  // database.get(aClient2, "/Controller/" + macID + "/tagStatus", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagStatusTask"); // 스트리밍시.. set 이후에는 느려짐
 }
 
 void getExternalIP()
@@ -165,15 +168,15 @@ void printResult(AsyncResult &aResult)
       Firebase.printf("type: %d\n", RTDB.type());
       
 
-      if (RTDB.to<String>() != "null")
-      {
-        if (aResult.uid() == "streamTagTypeTask")
-          tagType = RTDB.to<int>();
-        else if (aResult.uid() == "streamTagStatusTask")
-          tagStatus = RTDB.to<int>();
-        else if (aResult.uid() == "streamTagColorTask")
-          tagColor = RTDB.to<int>();
-      }
+      // if (RTDB.to<String>() != "null")
+      // {
+      //   if (aResult.uid() == "streamTagTypeTask")
+      //     tagType = RTDB.to<int>();
+      //   else if (aResult.uid() == "streamTagStatusTask")
+      //     tagStatus = RTDB.to<int>();
+      //   else if (aResult.uid() == "streamTagColorTask")
+      //     tagColor = RTDB.to<int>();
+      // }
 
       // The stream event from RealtimeDatabaseResult can be converted to the values as following.
       // bool v1 = RTDB.to<bool>();
@@ -187,9 +190,18 @@ void printResult(AsyncResult &aResult)
       Serial.println();
       Serial.println("----------------------------");
       Firebase.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
-      if (strcmp(aResult.uid().c_str(), "getTask") == 0)
+      Serial.println(aResult.uid().c_str());
+      Serial.println(aResult.c_str());
+      if (strcmp(aResult.uid().c_str(), "getFirmwareVersionTask") == 0)
       {
-        tag = atoi(aResult.c_str());
+        Serial.println("latest version:" + String(aResult.c_str()));
+
+        if(atof(aResult.c_str()) > version){
+          
+          Serial.println("New version available");
+          
+        }
+
       }
     }
     Firebase.printf("Free Heap: %d\n", ESP.getFreeHeap());

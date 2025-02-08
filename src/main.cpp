@@ -59,22 +59,18 @@ void loop()
     timeout = millis();
     if (taskComplete != 0)
     {
+      Serial.println("start get latest version data");
+      database.get(aClient4, "/Firmware/version", asyncCB, false, "getFirmwareVersionTask");
 
       Serial.println("start set data");
       localIp = WiFi.localIP().toString();
-      database.set<String>(aClient3, "/Controller/" + macID + "/version", version, asyncCB, "setVersionTask");
+      database.set<float>(aClient3, "/Controller/" + macID + "/version", version, asyncCB, "setVersionTask");
       database.set<String>(aClient3, "/Controller/" + macID + "/ID", macID, asyncCB, "setIDTask");
       database.set<String>(aClient3, "/Controller/" + macID + "/IP", localIp, asyncCB, "setIPTask");
       database.set<String>(aClient3, "/Controller/" + macID + "/physicalIP", physicalIP, asyncCB, "setphysicalIPTask");
 
-#if defined(OTA_STORAGE)
-      storage.setOTAStorage(OTA_STORAGE);
-#endif
       Serial.println("Updating your firmware (OTA)... ");
-      storage.ota(aClient3, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
-      // You can provide the access token in case non-authentication mode (NoAuth) for priviledge access file download.
-      // storage.ota(aClient, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin", "access token"), asyncCB, "otaTask");
-
+          storage.ota(aClient4, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
       taskComplete = 0;
     }
   }
