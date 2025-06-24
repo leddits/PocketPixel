@@ -58,7 +58,7 @@ void loop()
     if (taskComplete != 0)
     {
       Serial.println("start get latest version data");
-      database.get(aClient4, "/Firmware/version", asyncCB, false, "getFirmwareVersionTask");
+      database.get(aClient1, "/Firmware/version", asyncCB, false, "getFirmwareVersionTask");
 
       Serial.println("start set data");
       localIp = WiFi.localIP().toString();
@@ -67,8 +67,7 @@ void loop()
       database.set<String>(aClient3, "/Controller/" + macID + "/IP", localIp, asyncCB, "setIPTask");
       database.set<String>(aClient3, "/Controller/" + macID + "/physicalIP", physicalIP, asyncCB, "setphysicalIPTask");
 
-      Serial.println("Updating your firmware (OTA)... ");
-      storage.ota(aClient4, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
+      
       taskComplete = 0;
     }
   }

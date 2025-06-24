@@ -17,7 +17,6 @@ void firebaseSetup()
   ssl_client2.setBufferSizes(2048, 1024);
   ssl_client3.setBufferSizes(2048, 1024);
 
-
   // In case using ESP8266 without PSRAM and you want to reduce the memory usage,
   // you can use WiFiClientSecure instead of ESP_SSLClient with minimum receive and transmit buffer size setting as following.
   // ssl_client1.setBufferSizes(1024, 512);
@@ -44,8 +43,8 @@ void firebaseSetup()
   app.getApp<Storage>(storage);
   database.url(FIREBASE_URL);
   database.setSSEFilters("get,put,patch,keep-alive,cancel,auth_revoked");
-  
-  database.get(aClient1, "/Controller/" + macID + "/tagColor", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagColorTask");   // 스트리밍시.. set 이후에는 느려짐
+
+  database.get(aClient1, "/Controller/" + macID + "/tagColor", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagColorTask"); // 스트리밍시.. set 이후에는 느려짐
   // database.get(aClient2, "/Controller/" + macID + "/tagStatus", asyncCB, true /* SSE mode (HTTP Streaming) */, "streamTagStatusTask"); // 스트리밍시.. set 이후에는 느려짐
 }
 
@@ -112,20 +111,19 @@ void getExternalIP()
   Serial.println(WiFi.localIP().toString());
 }
 
-
 void restart()
 {
-    Serial.println("Update firmware completed.");
-    Serial.println();
+  Serial.println("Update firmware completed.");
+  Serial.println();
 #if defined(OTA_STORAGE)
-    Serial.println("Applying update...");
-    OTA_STORAGE.apply();
+  Serial.println("Applying update...");
+  OTA_STORAGE.apply();
 #elif defined(ESP32) || defined(ESP8266)
-    Serial.println("Restarting...\n\n");
-    ESP.restart();
+  Serial.println("Restarting...\n\n");
+  ESP.restart();
 #elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
-    Serial.println("Restarting...\n\n");
-    rp2040.restart();
+  Serial.println("Restarting...\n\n");
+  rp2040.restart();
 #endif
 }
 
@@ -166,7 +164,6 @@ void printResult(AsyncResult &aResult)
       Firebase.printf("path: %s\n", RTDB.dataPath().c_str());
       Firebase.printf("data: %s\n", RTDB.to<const char *>());
       Firebase.printf("type: %d\n", RTDB.type());
-      
 
       // if (RTDB.to<String>() != "null")
       // {
@@ -196,36 +193,36 @@ void printResult(AsyncResult &aResult)
       {
         Serial.println("latest version:" + String(aResult.c_str()));
 
-        if(atof(aResult.c_str()) > version){
-          
+        if (atof(aResult.c_str()) > version)
+        {
           Serial.println("New version available");
-          
+          Serial.println("Updating your firmware (OTA)... ");
+          storage.ota(aClient4, FirebaseStorage::Parent(STORAGE_BUCKET_ID, "firmware.bin"), asyncCB, "otaTask");
         }
-
       }
     }
     Firebase.printf("Free Heap: %d\n", ESP.getFreeHeap());
   }
   if (aResult.downloadProgress())
   {
-      Firebase.printf("Download task: %s, downloaded %d%s (%d of %d)\n", aResult.uid().c_str(), aResult.downloadInfo().progress, "%", aResult.downloadInfo().downloaded, aResult.downloadInfo().total);
-      if (aResult.downloadInfo().total == aResult.downloadInfo().downloaded)
-      {
-          Firebase.printf("Download task: %s, completed!\n", aResult.uid().c_str());
-          if (aResult.isOTA())
-              restart();
-      }
+    Firebase.printf("Download task: %s, downloaded %d%s (%d of %d)\n", aResult.uid().c_str(), aResult.downloadInfo().progress, "%", aResult.downloadInfo().downloaded, aResult.downloadInfo().total);
+    if (aResult.downloadInfo().total == aResult.downloadInfo().downloaded)
+    {
+      Firebase.printf("Download task: %s, completed!\n", aResult.uid().c_str());
+      if (aResult.isOTA())
+        restart();
+    }
   }
 
   if (aResult.uploadProgress())
   {
-      Firebase.printf("Upload task: %s, uploaded %d%s (%d of %d)\n", aResult.uid().c_str(), aResult.uploadInfo().progress, "%", aResult.uploadInfo().uploaded, aResult.uploadInfo().total);
-      if (aResult.uploadInfo().total == aResult.uploadInfo().uploaded)
-      {
-          Firebase.printf("Upload task: %s, completed!\n", aResult.uid().c_str());
-          Serial.print("Download URL: ");
-          Serial.println(aResult.uploadInfo().downloadUrl);
-      }
+    Firebase.printf("Upload task: %s, uploaded %d%s (%d of %d)\n", aResult.uid().c_str(), aResult.uploadInfo().progress, "%", aResult.uploadInfo().uploaded, aResult.uploadInfo().total);
+    if (aResult.uploadInfo().total == aResult.uploadInfo().uploaded)
+    {
+      Firebase.printf("Upload task: %s, completed!\n", aResult.uid().c_str());
+      Serial.print("Download URL: ");
+      Serial.println(aResult.uploadInfo().downloadUrl);
+    }
   }
 }
 
