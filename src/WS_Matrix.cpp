@@ -444,21 +444,26 @@ void generateLine()
  */
 void generateLineWithTilt(float accelX)
 {
-    // 기울기에 따른 중심점 계산 (간단하게)
-    float centerShift = -accelX * 2.0; // 적당한 증폭
+    // 기울기 효과를 더 강하게 - 좌우 끝까지 이동 (3.5 -> 4.5로 증가)
+    float centerShift = -accelX * 4.5;
     int tiltedCenter = (Matrix_Col / 2) + (int)round(centerShift);
     
-    // 범위 제한
+    // 범위 제한 (0~7까지 모든 위치 사용)
     if (tiltedCenter < 0) tiltedCenter = 0;
     if (tiltedCenter >= Matrix_Col) tiltedCenter = Matrix_Col - 1;
     
     for (uint8_t x = 0; x < Matrix_Col; x++)
     {
-        // 기울어진 중심에서 멀어질수록 불꽃 강도 감소 (기존 로직과 동일)
+        // 중심 근처와 가장자리 차이를 더 크게
         int distance = abs((int)x - tiltedCenter);
-        int maxIntensity = (distance == 0) ? 100 : (distance == 1) ? 80 : 60;
+        int maxIntensity;
         
-        line[x] = random(10, maxIntensity);
+        if (distance == 0) maxIntensity = 100;      // 중심: 최대
+        else if (distance == 1) maxIntensity = 60;  // 1칸: 중간
+        else if (distance == 2) maxIntensity = 35;  // 2칸: 약간
+        else maxIntensity = 15;                     // 3칸 이상: 최소
+        
+        line[x] = random(3, maxIntensity);
     }
 }
 

@@ -48,6 +48,20 @@ void loop()
     shiftUp();
     // 간단한 기울기 효과 적용
     generateLineWithTilt(Accel.x);
+    
+    // 기울기 효과 확인용 출력
+    static unsigned long lastDebug = 0;
+    if (millis() - lastDebug > 1000)
+    {
+      float centerShift = -Accel.x * 4.5;
+      int tiltedCenter = (Matrix_Col / 2) + (int)round(centerShift);
+      if (tiltedCenter < 0) tiltedCenter = 0;
+      if (tiltedCenter >= Matrix_Col) tiltedCenter = Matrix_Col - 1;
+      
+      Serial.printf("Accel.x: %.2f -> Center: %d (shift: %.1f)\n", Accel.x, tiltedCenter, centerShift);
+      lastDebug = millis();
+    }
+    
     pcnt = 0;
   }
   drawFrame(pcnt);
