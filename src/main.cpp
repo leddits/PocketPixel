@@ -40,25 +40,30 @@ void setup()
 
 void loop()
 {
+  // Firebase 관련 부분 임시 주석처리 (에러 방지용)
+  /*
   app.loop();
   database.loop();
   storage.loop();
+  */
+  
   if (pcnt >= 100)
   {
     shiftUp();
-    // 간단한 기울기 효과 적용
-    generateLineWithTilt(Accel.x);
+    // Y축으로 좌우 기울기 적용 + 더 강한 증폭
+    generateLineWithTilt(Accel.y * 1.5); // Y축 값이 작으니 1.5배 증폭
     
     // 기울기 효과 확인용 출력
     static unsigned long lastDebug = 0;
     if (millis() - lastDebug > 1000)
     {
-      float centerShift = -Accel.x * 4.5;
+      float amplifiedY = Accel.y * 1.5;
+      float centerShift = -amplifiedY * 4.5;
       int tiltedCenter = (Matrix_Col / 2) + (int)round(centerShift);
       if (tiltedCenter < 0) tiltedCenter = 0;
       if (tiltedCenter >= Matrix_Col) tiltedCenter = Matrix_Col - 1;
       
-      Serial.printf("Accel.x: %.2f -> Center: %d (shift: %.1f)\n", Accel.x, tiltedCenter, centerShift);
+      Serial.printf("Accel.y: %.3f -> Amplified: %.3f -> Center: %d\n", Accel.y, amplifiedY, tiltedCenter);
       lastDebug = millis();
     }
     
@@ -67,6 +72,9 @@ void loop()
   drawFrame(pcnt);
   matrix.show();
   pcnt += 30;
+  
+  // Firebase 관련 부분 임시 주석처리 (에러 방지용)
+  /*
   if (app.ready() && millis() - timeout > 100)
   {
     timeout = millis();
@@ -86,16 +94,17 @@ void loop()
       taskComplete = 0;
     }
   }
+  */
   if (millis() - timeout > 10)
   {
     timeout = millis();
     QMI8658_Loop();
     
-    // 간단한 센서 값 출력 (필요시)
+    // 모든 축 출력해서 어느 축이 좌우 기울기인지 확인
     static unsigned long lastPrint = 0;
-    if (millis() - lastPrint > 1000) // 1초마다 출력
+    if (millis() - lastPrint > 500) // 0.5초마다 출력
     {
-      Serial.printf("Accel X: %.2f\n", Accel.x);
+      Serial.printf("Accel X: %.2f, Y: %.2f, Z: %.2f\n", Accel.x, Accel.y, Accel.z);
       lastPrint = millis();
     }
     
@@ -163,18 +172,3 @@ void loop()
     */
   }
 }
-/* void setup()
-{
-  Matrix_Init();
-}
-int x=0;
-
-void loop()
-{
-  RGB_Matrix1(x);
-  delay(30);
-  x++;
-  if(x==24)
-    x=0;
-}
- */
