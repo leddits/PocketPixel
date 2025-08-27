@@ -19,6 +19,7 @@ void shiftUp();
 void generateLine();
 void generateLineWithTilt(float accelX); // 기울기 적용된 라인 생성                         
 void drawFrame(int pcnt);
+void drawFrameWithTilt(int pcnt, float tiltOffset); // 기울기 적용된 프레임 그리기
 
 void RGB_Matrix();                         
 void RGB_Matrix1(int x);                         

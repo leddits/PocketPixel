@@ -524,6 +524,58 @@ void drawFrame(int pcnt)
     }
 }
 
+/**
+ * draw a frame with tilt effect
+ * @param pcnt percentage of interpolation
+ * @param tiltOffset horizontal offset for tilt effect
+ */
+void drawFrameWithTilt(int pcnt, float tiltOffset)
+{
+    int nextv;
+    int offset = (int)round(tiltOffset);
+
+    // each row interpolates with the one before it
+    for (unsigned char y = Matrix_Row - 1; y > 0; y--)
+    {
+        for (unsigned char x = 0; x < Matrix_Col; x++)
+        {
+            // 기울기에 따른 소스 x 좌표 계산
+            int srcX = x - offset;
+            if (srcX < 0 || srcX >= Matrix_Col) {
+                // 범위를 벗어나면 검은색
+                setPixelBottomLeft(x, y, 0);
+                continue;
+            }
+            
+            nextv =
+                (((100.0 - pcnt) * matrixValue[y][srcX] + pcnt * matrixValue[y - 1][srcX]) / 100.0) - valueMask[y][srcX];
+            uint16_t color = HSVtoRGB(
+                hueMask[y][srcX],         // H (기울어진 위치의 색상 사용)
+                255,                      // S
+                (uint8_t)max(0, nextv)    // V
+            );
+            setPixelBottomLeft(x, y, color);
+        }
+    }
+
+    // first row interpolates with the "next" line
+    for (unsigned char x = 0; x < Matrix_Col; x++)
+    {
+        int srcX = x - offset;
+        if (srcX < 0 || srcX >= Matrix_Col) {
+            setPixelBottomLeft(x, 0, 0);
+            continue;
+        }
+        
+        uint16_t color = HSVtoRGB(
+            hueMask[0][srcX],                                                           // H
+            255,                                                                        // S
+            (uint8_t)(((100.0 - pcnt) * matrixValue[0][srcX] + pcnt * line[srcX]) / 100.0) // V
+        );
+        setPixelBottomLeft(x, 0, color);
+    }
+}
+
 void Matrix_Init()
 {
     matrix.begin();

@@ -69,7 +69,10 @@ void loop()
     
     pcnt = 0;
   }
-  drawFrame(pcnt);
+  
+  // 기울기 적용된 불꽃 그리기
+  float tiltOffset = -Accel.y * 1.5 * 1.5; // 전체 불꽃을 기울이기 위한 오프셋
+  drawFrameWithTilt(pcnt, tiltOffset);
   matrix.show();
   pcnt += 30;
   
