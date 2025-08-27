@@ -430,11 +430,11 @@ void generateLine()
     
     for (uint8_t x = 0; x < Matrix_Col; x++)
     {
-        // 중심에서 멀어질수록 불꽃 강도 약간 감소
+        // 중심에서 멀어질수록 불꽃 강도 약간 감소 (밝기 증가)
         int distance = abs((int)x - baseCenter);
-        int maxIntensity = (distance == 0) ? 100 : (distance == 1) ? 80 : 60;
+        int maxIntensity = (distance == 0) ? 120 : (distance == 1) ? 100 : 80; // 100->120, 80->100, 60->80
         
-        line[x] = random(10, maxIntensity);
+        line[x] = random(20, maxIntensity); // 최소값 10->20으로 증가
     }
 }
 
@@ -458,12 +458,12 @@ void generateLineWithTilt(float accelX)
         int distance = abs((int)x - tiltedCenter);
         int maxIntensity;
         
-        if (distance == 0) maxIntensity = 100;      // 중심: 최대
-        else if (distance == 1) maxIntensity = 60;  // 1칸: 중간
-        else if (distance == 2) maxIntensity = 35;  // 2칸: 약간
-        else maxIntensity = 15;                     // 3칸 이상: 최소
+        if (distance == 0) maxIntensity = 120;     // 중심: 최대 (100->120)
+        else if (distance == 1) maxIntensity = 80;  // 1칸: 중간 (60->80)
+        else if (distance == 2) maxIntensity = 50;  // 2칸: 약간 (35->50)
+        else maxIntensity = 25;                     // 3칸 이상: 최소 (15->25)
         
-        line[x] = random(3, maxIntensity);
+        line[x] = random(15, maxIntensity); // 최소값 3->15로 증가
     }
 }
 
@@ -549,10 +549,15 @@ void drawFrameWithTilt(int pcnt, float tiltOffset)
             
             nextv =
                 (((100.0 - pcnt) * matrixValue[y][srcX] + pcnt * matrixValue[y - 1][srcX]) / 100.0) - valueMask[y][srcX];
+            
+            // 밝기 증폭 (1.3배)
+            int brightenedValue = (int)(nextv * 1.3);
+            if (brightenedValue > 255) brightenedValue = 255;
+            
             uint16_t color = HSVtoRGB(
-                hueMask[y][srcX],         // H (기울어진 위치의 색상 사용)
-                255,                      // S
-                (uint8_t)max(0, nextv)    // V
+                hueMask[y][srcX],                    // H (기울어진 위치의 색상 사용)
+                255,                                 // S
+                (uint8_t)max(0, brightenedValue)     // V (밝기 증폭)
             );
             setPixelBottomLeft(x, y, color);
         }
@@ -567,10 +572,15 @@ void drawFrameWithTilt(int pcnt, float tiltOffset)
             continue;
         }
         
+        // 밝기 계산 및 증폭 (1.3배)
+        int baseValue = (int)(((100.0 - pcnt) * matrixValue[0][srcX] + pcnt * line[srcX]) / 100.0);
+        int brightenedValue = (int)(baseValue * 1.3);
+        if (brightenedValue > 255) brightenedValue = 255;
+        
         uint16_t color = HSVtoRGB(
-            hueMask[0][srcX],                                                           // H
-            255,                                                                        // S
-            (uint8_t)(((100.0 - pcnt) * matrixValue[0][srcX] + pcnt * line[srcX]) / 100.0) // V
+            hueMask[0][srcX],                    // H
+            255,                                 // S
+            (uint8_t)max(0, brightenedValue)     // V (밝기 증폭)
         );
         setPixelBottomLeft(x, 0, color);
     }
