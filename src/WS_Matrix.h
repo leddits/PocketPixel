@@ -13,9 +13,11 @@
 
 extern int pcnt;
 extern Adafruit_NeoMatrix matrix;
+extern float tiltOffset; // 불꽃 기울기 오프셋
 
 void shiftUp();                         
-void generateLine();                         
+void generateLine();
+void generateLineWithTilt(float accelX); // 기울기 적용된 라인 생성                         
 void drawFrame(int pcnt);
 
 void RGB_Matrix();                         

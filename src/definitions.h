@@ -1,5 +1,5 @@
 // version
-float version = 0.;
+float version = 1.0;
 
 // wifi setting
 String macID = WiFi.macAddress();

@@ -1,5 +1,6 @@
 #include "WS_Matrix.h"
 
+float tiltOffset = 0.0; // 불꽃 기울기 오프셋
 uint8_t RGB_Data[3] = {100, 100, 30};
 uint8_t RGB_Data1[64][3] = {};
 uint8_t RGB_Data2[192][3] = {
@@ -428,6 +429,43 @@ void generateLine()
     {
         line[x] = random(10, 100);
         // line[x] = random(64, 255);
+    }
+}
+
+/**
+ * Generate line with tilt effect based on accelerometer
+ * @param accelX X-axis acceleration value (-1.0 to 1.0)
+ */
+void generateLineWithTilt(float accelX)
+{
+    // 기울기에 따라 불꽃의 중심을 이동 (반대방향으로 기울어짐)
+    // 강도를 조금 줄여서 더 자연스럽게
+    float centerShift = -accelX * 3.0; // 4.0에서 3.0으로 조정
+    float centerXFloat = (Matrix_Col / 2.0) + centerShift;
+    
+    // 부드러운 중심점 계산
+    int centerX = (int)round(centerXFloat);
+    
+    // 범위 제한 (0 ~ Matrix_Col-1)
+    if (centerX < 0) centerX = 0;
+    if (centerX >= Matrix_Col) centerX = Matrix_Col - 1;
+    
+    for (uint8_t x = 0; x < Matrix_Col; x++)
+    {
+        // 중심에서 멀어질수록 불꽃 강도 감소 (부드러운 곡선)
+        float distance = abs((float)x - centerXFloat);
+        float maxDistance = Matrix_Col / 2.0;
+        float intensity = 1.0 - (distance / maxDistance);
+        
+        // 가장자리도 약간의 불꽃 유지
+        if (intensity < 0.15) intensity = 0.15;
+        
+        // 중심 근처는 더 강한 불꽃, 가장자리는 약한 불꽃
+        int minVal = (distance < 1.0) ? 40 : 8; // 중심 근처는 40, 나머지는 8
+        int maxVal = (int)(90 * intensity); // 최대값을 100에서 90으로 조정
+        if (maxVal < minVal) maxVal = minVal;
+        
+        line[x] = random(minVal, maxVal + 1);
     }
 }
 
