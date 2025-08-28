@@ -554,8 +554,17 @@ void drawFrameWithTilt(int pcnt, float tiltOffset)
             int brightenedValue = (int)(nextv * 1.3);
             if (brightenedValue > 255) brightenedValue = 255;
             
+            // 시간에 따른 색상 오프셋 계산 (0→85→0 반복, 약 8.5초 주기)
+            uint8_t timeOffset = (millis() / 50) % 170; // 0~169 범위
+            uint8_t colorShift = timeOffset > 85 ? 170 - timeOffset : timeOffset; // 0→85→0
+            
+            // 원래 불꽃 패턴 + 색상 오프셋
+            // 원래: 가운데 노란색(25), 외곽 빨간색(0)
+            // 변환: 가운데 녹색(110), 외곽 파란색(85)
+            uint8_t finalHue = (hueMask[y][srcX] + colorShift * 3) % 256; // 색상 시프트 적용
+            
             uint16_t color = HSVtoRGB(
-                hueMask[y][srcX],                    // H (기울어진 위치의 색상 사용)
+                finalHue,                            // H (시간에 따라 변화하는 색상)
                 255,                                 // S
                 (uint8_t)max(0, brightenedValue)     // V (밝기 증폭)
             );
@@ -577,10 +586,15 @@ void drawFrameWithTilt(int pcnt, float tiltOffset)
         int brightenedValue = (int)(baseValue * 1.3);
         if (brightenedValue > 255) brightenedValue = 255;
         
+        // 시간에 따른 색상 오프셋 계산 (위와 동일)
+        uint8_t timeOffset = (millis() / 50) % 170; // 0~169 범위
+        uint8_t colorShift = timeOffset > 85 ? 170 - timeOffset : timeOffset; // 0→85→0
+        uint8_t finalHue = (hueMask[0][srcX] + colorShift * 3) % 256; // 색상 시프트 적용
+        
         uint16_t color = HSVtoRGB(
-            hueMask[0][srcX],                    // H
-            255,                                 // S
-            (uint8_t)max(0, brightenedValue)     // V (밝기 증폭)
+            finalHue,                                // H (시간에 따라 변화하는 색상)
+            255,                                     // S
+            (uint8_t)max(0, brightenedValue)         // V (밝기 증폭)
         );
         setPixelBottomLeft(x, 0, color);
     }
